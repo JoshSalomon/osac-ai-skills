@@ -2,7 +2,7 @@
 name: jira-task-management
 description: Manage Jira issues on Red Hat Jira (redhat.atlassian.net) using jira-cli. Use this skill whenever the user mentions Jira tickets, issues, bugs, tasks, epics, sprints, or wants to create/update/search work items. Also use when the user references issue keys like OSAC-*, NVIDIA-*, RHEL-*, asks about task status, or wants to track work.
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # Jira Task Management
@@ -47,8 +47,18 @@ jira issue list -q 'summary ~ "exact or distinctive summary phrase"' --plain
 **Safe create pattern** — use per-run temp files with cleanup, run create directly (not inside `$(...)`), capture stderr (never `2>/dev/null`), allow up to 3 minutes:
 
 ```bash
-# Load shared temp helpers (from osac-workspace root)
-source "$(git rev-parse --show-toplevel)/tools/jira-safe-create.sh"
+# Load shared temp helpers from the vendored osac-ai-skills checkout
+# (~/.osac-ai-skills or this repo's own .osac-ai-skills)
+REPO_DIR=$(git rev-parse --show-toplevel)
+_jsc=""
+for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
+  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
+done
+if [[ -z "$_jsc" ]]; then
+  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
+  exit 1
+fi
+source "$_jsc"
 
 # Single create — write body, capture stdout and stderr separately
 # Register each path in the parent shell (add_temp inside $(...) runs in a subshell)

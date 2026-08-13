@@ -2,7 +2,7 @@
 name: capture-tasks-from-meeting-notes
 description: "Analyze meeting notes to find action items and create Jira tasks for assigned work using jira-cli. When an agent needs to: (1) Create Jira tasks or tickets from meeting notes, (2) Extract or find action items from notes, (3) Parse meeting notes for assigned tasks, or (4) Analyze notes and generate tasks for team members."
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # Capture Tasks from Meeting Notes
@@ -127,7 +127,16 @@ Replace `<SKILL_VERSION>` in the trailer with this skill's `metadata.version` va
 
 ```bash
 # Once before the loop (if not already sourced):
-source "$(git rev-parse --show-toplevel)/tools/jira-safe-create.sh"
+REPO_DIR=$(git rev-parse --show-toplevel)
+_jsc=""
+for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
+  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
+done
+if [[ -z "$_jsc" ]]; then
+  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
+  exit 1
+fi
+source "$_jsc"
 
 BODY=$(new_temp osac-task-body)
 add_temp "$BODY"

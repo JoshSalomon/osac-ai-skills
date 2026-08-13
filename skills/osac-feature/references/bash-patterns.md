@@ -10,7 +10,16 @@ validation or `--plain` parsing.
 ## Source safe-create script
 
 ```bash
-source "$(git rev-parse --show-toplevel)/tools/jira-safe-create.sh"
+REPO_DIR=$(git rev-parse --show-toplevel)
+_jsc=""
+for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
+  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
+done
+if [[ -z "$_jsc" ]]; then
+  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
+  exit 1
+fi
+source "$_jsc"
 ```
 
 ## Key validation and JQL helpers

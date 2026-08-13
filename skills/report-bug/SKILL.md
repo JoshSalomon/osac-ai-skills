@@ -2,7 +2,7 @@
 name: report-bug
 description: Report a bug in Jira without fixing it — creates a Bug ticket with proper description, links it to an epic, and assigns it. Use when the user says 'report a bug', 'file a bug', 'log a bug', 'open a bug ticket', or wants to track a bug without immediately writing a fix.
 metadata:
-  version: "0.1.4"
+  version: "0.1.5"
 ---
 
 # Report Bug
@@ -157,7 +157,16 @@ Use the safe create pattern in `jira-task-management` — source `tools/jira-saf
 Use exactly these sections — no additions. Replace `<SKILL_VERSION>` in the trailer with this skill's `metadata.version` value:
 
 ```bash
-source "$(git rev-parse --show-toplevel)/tools/jira-safe-create.sh"
+REPO_DIR=$(git rev-parse --show-toplevel)
+_jsc=""
+for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
+  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
+done
+if [[ -z "$_jsc" ]]; then
+  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
+  exit 1
+fi
+source "$_jsc"
 
 BODY=$(new_temp osac-bug-body)
 add_temp "$BODY"
@@ -242,7 +251,16 @@ If logs, screenshots, or other files came up during the conversation, list them 
 **Do not attach files containing sensitive data (credentials, tokens, keys, secrets, passwords, API keys, PII, or internal hostnames). Read the file content before attaching. If in doubt, ask the user.**
 
 ```bash
-source "$(git rev-parse --show-toplevel)/tools/jira-safe-create.sh"
+REPO_DIR=$(git rev-parse --show-toplevel)
+_jsc=""
+for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
+  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
+done
+if [[ -z "$_jsc" ]]; then
+  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
+  exit 1
+fi
+source "$_jsc"
 
 login=$(jira_login) || { echo "Jira login not configured — attach manually via the Jira link" >&2; }
 token=$(jira_token) || { echo "No Jira API token available (checked \$JIRA_API_TOKEN and ~/.netrc) — attach manually via the Jira link" >&2; }
