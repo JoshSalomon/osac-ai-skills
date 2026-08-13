@@ -14,15 +14,34 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 pass() { echo "PASS: $*"; }
 
 test_skills_reference_shared_script() {
+  # Consumers either name the script directly (jira-task-management, the
+  # canonical skill) or link to the shared resolve-jira-safe-create.md
+  # reference (everyone else, since OSAC-4005's dedup) — either counts.
   local skill file
   for skill in jira-task-management report-bug capture-tasks-from-meeting-notes osac-feature; do
     file="${ROOT}/skills/${skill}/SKILL.md"
     # osac-feature's sourcing logic lives in a nested reference, not SKILL.md
     [[ "$skill" == "osac-feature" ]] && file="${ROOT}/skills/osac-feature/references/bash-patterns.md"
-    grep -q 'jira-safe-create\.sh' "$file" \
-      || fail "${skill}: missing jira-safe-create.sh reference in ${file}"
+    rg -q 'jira-safe-create\.sh|resolve-jira-safe-create\.md' "$file" \
+      || fail "${skill}: missing jira-safe-create.sh / resolve-jira-safe-create.md reference in ${file}"
     pass "${skill}: references shared script"
   done
+}
+
+test_jira_safe_create_lookup_not_duplicated() {
+  # OSAC-4005 extracted the vendor-lookup snippet to a single shared
+  # reference (jira-task-management/references/resolve-jira-safe-create.md)
+  # specifically to stop this ~9-line block from drifting across 5 verbatim
+  # copies. Fail if any consumer re-inlines it instead of linking.
+  local skill file
+  for skill in report-bug capture-tasks-from-meeting-notes osac-feature; do
+    file="${ROOT}/skills/${skill}/SKILL.md"
+    [[ "$skill" == "osac-feature" ]] && file="${ROOT}/skills/osac-feature/references/bash-patterns.md"
+    if rg -q 'for _cand in .*\.osac-ai-skills.*\.osac-ai-skills' "$file"; then
+      fail "${skill}: re-inlined the jira-safe-create.sh vendor-lookup snippet instead of linking to resolve-jira-safe-create.md"
+    fi
+  done
+  pass "no re-duplicated jira-safe-create.sh vendor-lookup snippets"
 }
 
 test_no_fixed_tmp_paths() {
@@ -63,6 +82,7 @@ test_osac_feature_no_duplicate_helpers() {
 }
 
 test_skills_reference_shared_script
+test_jira_safe_create_lookup_not_duplicated
 test_no_fixed_tmp_paths
 test_no_inline_create_in_examples
 test_osac_feature_no_duplicate_helpers

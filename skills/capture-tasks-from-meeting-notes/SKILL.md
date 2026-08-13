@@ -119,25 +119,14 @@ Do NOT create tasks until user confirms.
 
 ### Step 5: Create Tasks
 
-Once confirmed, create each Jira task using the Safe create pattern in `jira-task-management` (source `tools/jira-safe-create.sh` once, then `new_temp` + `add_temp` per task).
+Once confirmed, create each Jira task using the Safe create pattern in `jira-task-management` — source the shared script once per [resolve-jira-safe-create.md](../jira-task-management/references/resolve-jira-safe-create.md), then `new_temp` + `add_temp` per task.
 
 #### For Each Action Item
 
 Replace `<SKILL_VERSION>` in the trailer with this skill's `metadata.version` value:
 
 ```bash
-# Once before the loop (if not already sourced):
-REPO_DIR=$(git rev-parse --show-toplevel)
-_jsc=""
-for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
-  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
-done
-if [[ -z "$_jsc" ]]; then
-  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
-  exit 1
-fi
-source "$_jsc"
-
+# Once before the loop (if not already sourced — see resolve-jira-safe-create.md):
 BODY=$(new_temp osac-task-body)
 add_temp "$BODY"
 OUT=$(new_temp osac-jira-out)

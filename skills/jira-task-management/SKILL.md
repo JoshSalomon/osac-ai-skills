@@ -46,20 +46,12 @@ jira issue list -q 'summary ~ "exact or distinctive summary phrase"' --plain
 
 **Safe create pattern** — use per-run temp files with cleanup, run create directly (not inside `$(...)`), capture stderr (never `2>/dev/null`), allow up to 3 minutes:
 
-```bash
-# Load shared temp helpers from the vendored osac-ai-skills checkout
-# (~/.osac-ai-skills or this repo's own .osac-ai-skills)
-REPO_DIR=$(git rev-parse --show-toplevel)
-_jsc=""
-for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
-  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
-done
-if [[ -z "$_jsc" ]]; then
-  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
-  exit 1
-fi
-source "$_jsc"
+**Source the shared script first** — see
+[resolve-jira-safe-create.md](references/resolve-jira-safe-create.md) for
+the vendor-lookup snippet. Defines `new_temp`, `add_temp`, `jira_login()`,
+and `jira_token()`.
 
+```bash
 # Single create — write body, capture stdout and stderr separately
 # Register each path in the parent shell (add_temp inside $(...) runs in a subshell)
 BODY=$(new_temp osac-jira-body)

@@ -152,22 +152,15 @@ Only continue when the user answers yes.
 
 ## Create the Bug
 
-Use the safe create pattern in `jira-task-management` — source `tools/jira-safe-create.sh`, write the body to a temp file, run create directly (not inside `$(...)`), capture stdout/stderr separately:
+Use the safe create pattern in `jira-task-management` — source the shared
+script per
+[resolve-jira-safe-create.md](../jira-task-management/references/resolve-jira-safe-create.md),
+write the body to a temp file, run create directly (not inside `$(...)`),
+capture stdout/stderr separately:
 
 Use exactly these sections — no additions. Replace `<SKILL_VERSION>` in the trailer with this skill's `metadata.version` value:
 
 ```bash
-REPO_DIR=$(git rev-parse --show-toplevel)
-_jsc=""
-for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
-  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
-done
-if [[ -z "$_jsc" ]]; then
-  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
-  exit 1
-fi
-source "$_jsc"
-
 BODY=$(new_temp osac-bug-body)
 add_temp "$BODY"
 OUT=$(new_temp osac-jira-out)
@@ -250,18 +243,9 @@ If logs, screenshots, or other files came up during the conversation, list them 
 
 **Do not attach files containing sensitive data (credentials, tokens, keys, secrets, passwords, API keys, PII, or internal hostnames). Read the file content before attaching. If in doubt, ask the user.**
 
-```bash
-REPO_DIR=$(git rev-parse --show-toplevel)
-_jsc=""
-for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
-  [[ -f "${_cand}/tools/jira-safe-create.sh" ]] && { _jsc="${_cand}/tools/jira-safe-create.sh"; break; }
-done
-if [[ -z "$_jsc" ]]; then
-  echo "jira-safe-create.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
-  exit 1
-fi
-source "$_jsc"
+Re-source the shared script (see rationale below) before running:
 
+```bash
 login=$(jira_login) || { echo "Jira login not configured — attach manually via the Jira link" >&2; }
 token=$(jira_token) || { echo "No Jira API token available (checked \$JIRA_API_TOKEN and ~/.netrc) — attach manually via the Jira link" >&2; }
 if [ -n "${login:-}" ] && [ -n "${token:-}" ]; then
@@ -277,7 +261,7 @@ EOF
 fi
 ```
 
-Re-source `tools/jira-safe-create.sh` here rather than assuming the "Create the Bug" step above ran in the same shell session — sourcing is idempotent (see its own `JIRA_SAFE_CREATE_LOADED` guard), so this is safe whether or not it's already loaded. `jira_login()`/`jira_token()` are pre-checked before curl runs (rather than called inline inside the heredoc) so a missing credential reports its own clear cause instead of surfacing as a generic curl auth error. `jira_token()` prefers `$JIRA_API_TOKEN` but falls back to the `machine redhat.atlassian.net` entry in `~/.netrc` — the same credentials `jira-cli` itself authenticates from — so the upload works without a separate token export. The `curl` call itself reports a failed upload (auth error, network issue, or a bounded 10s-connect/30s-total timeout) via its own `if`/`echo` rather than relying solely on the prose below.
+Re-source the shared script per [resolve-jira-safe-create.md](../jira-task-management/references/resolve-jira-safe-create.md) here rather than assuming the "Create the Bug" step above ran in the same shell session — sourcing is idempotent (see its own `JIRA_SAFE_CREATE_LOADED` guard), so this is safe whether or not it's already loaded. `jira_login()`/`jira_token()` are pre-checked before curl runs (rather than called inline inside the heredoc) so a missing credential reports its own clear cause instead of surfacing as a generic curl auth error. `jira_token()` prefers `$JIRA_API_TOKEN` but falls back to the `machine redhat.atlassian.net` entry in `~/.netrc` — the same credentials `jira-cli` itself authenticates from — so the upload works without a separate token export. The `curl` call itself reports a failed upload (auth error, network issue, or a bounded 10s-connect/30s-total timeout) via its own `if`/`echo` rather than relying solely on the prose below.
 
 If the upload fails (no credentials in `$JIRA_API_TOKEN` or `~/.netrc`, auth error, or network issue), skip it and tell the user to attach files manually via the Jira link.
 
