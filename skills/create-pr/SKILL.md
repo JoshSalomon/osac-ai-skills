@@ -2,7 +2,7 @@
 name: create-pr
 description: Create a PR on an OSAC component repo (including the osac mono-repo, which may need per-component validation for multiple touched components in one pass) using the fork-based workflow. Runs repo-specific validation (build, test, lint), pushes to the developer's push remote, and opens a PR against the upstream repo with proper title format. Use when the user says 'create PR', 'open PR', 'submit for review', 'push and create PR', or when finishing a feature branch.
 metadata:
-  version: "0.1.2"
+  version: "0.1.3"
 ---
 
 # Create PR
@@ -468,7 +468,7 @@ related PRs in the description (e.g., 'Depends on osac-project/osac#123')."
 
 ### No push remote detected
 
-If `$OSAC_AI_SKILLS_DIR` is set, run `"${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" --print` to see detected remotes. If empty, run `tools/bootstrap.sh` first. Either way, if no push remote was found, add one:
+Run `"${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" --print` to see detected remotes (Step 1 already exits before this point if no vendored checkout was found, so `$OSAC_AI_SKILLS_DIR` is always set here). If no push remote was found, add one:
 
 ```bash
 git remote add <name> git@github.com:<your-username>/<repo>.git

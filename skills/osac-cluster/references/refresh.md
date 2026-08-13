@@ -22,13 +22,12 @@ for _cand in "${HOME}/.osac-ai-skills" "$(pwd)/.osac-ai-skills"; do
     OSAC_AI_SKILLS_DIR="${_cand}"; break
   fi
 done
-if [[ -n "$OSAC_AI_SKILLS_DIR" ]]; then
-  _resolve_out=$("${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" .) || { echo "Failed to resolve remotes"; exit 1; }
-  eval "$_resolve_out"
-else
-  echo "resolve-remotes.sh not found in a vendored osac-ai-skills checkout — run tools/bootstrap.sh. Falling back to 'origin'." >&2
-  UPSTREAM_REMOTE=origin
+if [[ -z "$OSAC_AI_SKILLS_DIR" ]]; then
+  echo "resolve-remotes.sh not found in a vendored osac-ai-skills checkout. Run tools/bootstrap.sh, then retry." >&2
+  exit 1
 fi
+_resolve_out=$("${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" .) || { echo "Failed to resolve remotes"; exit 1; }
+eval "$_resolve_out"
 git fetch "$UPSTREAM_REMOTE" main && git rebase "$UPSTREAM_REMOTE/main"
 cd osac-installer
 ```

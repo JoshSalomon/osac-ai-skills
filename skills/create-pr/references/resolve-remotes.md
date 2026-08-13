@@ -11,17 +11,15 @@ for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
     OSAC_AI_SKILLS_DIR="${_cand}"; break
   fi
 done
-if [[ -n "$OSAC_AI_SKILLS_DIR" ]]; then
-  _resolve_out=$("${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" "$REPO_DIR") || {
-    echo "Failed to resolve remotes. Run ${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh --print to diagnose."
-    exit 1
-  }
-  eval "$_resolve_out"
-else
+if [[ -z "$OSAC_AI_SKILLS_DIR" ]]; then
   echo "resolve-remotes.sh not found in a vendored osac-ai-skills checkout (~/.osac-ai-skills or ${REPO_DIR}/.osac-ai-skills). Run tools/bootstrap.sh, then retry." >&2
-  UPSTREAM_REMOTE=origin
-  PUSH_REMOTE=""
+  exit 1
 fi
+_resolve_out=$("${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" "$REPO_DIR") || {
+  echo "Failed to resolve remotes. Run ${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh --print to diagnose."
+  exit 1
+}
+eval "$_resolve_out"
 ```
 
 This sets `$UPSTREAM_REMOTE` (the osac-project remote) and `$PUSH_REMOTE`
