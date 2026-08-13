@@ -49,7 +49,7 @@ REPO_NAME="${REPO_NAME%.git}"
 | Check | Command | Fail action |
 |-------|---------|-------------|
 | Not on main | `[[ "$BRANCH" != "main" ]]` | Stop: "You're on main. Create a feature branch first." |
-| Push remote exists | `git remote get-url "$PUSH_REMOTE"` | Stop: "No push remote detected. Run `\"${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh\" --print` to diagnose. You may need to add one: `git remote add fork git@github.com:<user>/\<repo>.git`" |
+| Push remote exists | `git remote get-url "$PUSH_REMOTE"` | Stop: "No push remote detected." — see [No push remote detected](#no-push-remote-detected) below |
 | Has commits ahead of main | `git log main..HEAD --oneline` | Stop: "No commits ahead of main. Nothing to submit." |
 | Clean working tree | `git status --porcelain` | Stop: "Uncommitted changes detected. Commit or stash before proceeding." |
 
@@ -468,7 +468,7 @@ related PRs in the description (e.g., 'Depends on osac-project/osac#123')."
 
 ### No push remote detected
 
-Run `"${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" --print` to see which remotes were detected. If no push remote was found, add one:
+If `$OSAC_AI_SKILLS_DIR` is set, run `"${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" --print` to see detected remotes. If empty, run `tools/bootstrap.sh` first. Either way, if no push remote was found, add one:
 
 ```bash
 git remote add <name> git@github.com:<your-username>/<repo>.git
