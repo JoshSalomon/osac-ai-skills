@@ -144,7 +144,12 @@ for _cand in "${HOME}/.osac-ai-skills" "${WORKSPACE_ROOT}/.osac-ai-skills"; do
   fi
 done
 if [[ -z "$OSAC_AI_SKILLS_DIR" ]]; then
-  echo "WARNING: resolve-remotes.sh not found in a vendored osac-ai-skills checkout (~/.osac-ai-skills or ${WORKSPACE_ROOT}/.osac-ai-skills). Run tools/bootstrap.sh for accurate remote detection — assuming 'origin' for all repos." >&2
+  echo "ERROR: resolve-remotes.sh not found in a vendored osac-ai-skills checkout (~/.osac-ai-skills or ${WORKSPACE_ROOT}/.osac-ai-skills). Run tools/bootstrap.sh, then retry." >&2
+  # Stop here rather than guessing 'origin' — OSAC_REMOTE below feeds
+  # git push/tag for an official release; an unverified guess (origin
+  # isn't guaranteed to be osac-project, not a personal fork) is worse
+  # than refusing to proceed.
+  exit 1
 fi
 
 for repo in <selected repos>; do
@@ -152,17 +157,13 @@ for repo in <selected repos>; do
   if [ -d "$path" ]; then
     UPSTREAM_REMOTE=""
     PUSH_REMOTE=""
-    if [[ -n "$OSAC_AI_SKILLS_DIR" ]]; then
-      _resolve_out=$("${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" "$path") || {
-        echo "ERROR: ${repo} has no remote pointing to osac-project/${repo}."
-        echo "  Add one (any name works): git -C \"$path\" remote add <name> https://github.com/osac-project/${repo}.git"
-        # Stop or prompt user
-        continue
-      }
-      eval "$_resolve_out"
-    else
-      UPSTREAM_REMOTE=origin
-    fi
+    _resolve_out=$("${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" "$path") || {
+      echo "ERROR: ${repo} has no remote pointing to osac-project/${repo}."
+      echo "  Add one (any name works): git -C \"$path\" remote add <name> https://github.com/osac-project/${repo}.git"
+      # Stop or prompt user
+      continue
+    }
+    eval "$_resolve_out"
     OSAC_REMOTE="$UPSTREAM_REMOTE"
   fi
 done
