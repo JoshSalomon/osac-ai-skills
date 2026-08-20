@@ -275,17 +275,19 @@ still discards cleanly no matter how long it is.
 PASS/BLOCKED from severity labels; a reviewer's `NONE` row is its
 contribution toward an eventual PASS.
 
-**Redact credential-looking content before displaying any finding,
-regardless of verdict.** This applies everywhere a reviewer's text reaches
-the report: a parsed `Issue`/`Suggestion` cell in the aggregated
-BLOCKED/PASS table (Step 4.2), not only raw unparsed output on the
-`INVALID` path below. `security-review` scans the full diff for secrets
-and credentials, so a legitimate, well-formed finding row can itself
-contain one it found — a clean parse is not a guarantee the cell content
-is safe to echo. If any cell or raw text looks like it contains a live
-credential, redact it (mask everything after a short recognizable prefix)
-before displaying it, the same way `security-review`'s own Output section
-asks it not to quote one in full in the first place.
+**Redact sensitive content before displaying any finding, regardless of
+verdict.** This applies everywhere a reviewer's text reaches the report: a
+parsed `Issue`/`Suggestion` cell in the aggregated BLOCKED/PASS table
+(Step 4.2), not only raw unparsed output on the `INVALID` path below.
+`security-review`'s own scope covers both secrets/credentials and PII/data
+exposure (see its "Data exposure risks" check), so a legitimate,
+well-formed finding row can itself contain a live credential, PII (email,
+SSN, card number), a session ID, or an internal hostname it found — a
+clean parse is not a guarantee the cell content is safe to echo. If any
+cell or raw text looks like it contains one of these, redact it (mask
+everything after a short recognizable prefix) before displaying it, the
+same way `security-review`'s own Output section asks it not to quote a
+live credential in full in the first place.
 
 **Anything not matching this shape is unparseable** — including a timeout,
 an unbounded-wait harness, a bare `"no findings"` string, a `NONE` or

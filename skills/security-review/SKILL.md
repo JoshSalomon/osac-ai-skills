@@ -162,14 +162,15 @@ not a local convention. No synonyms (not "blocking", not "high", not "moderate")
 
 ## Output
 
-**Never quote a live credential in full.** When a finding is a secret,
-token, or other credential, reference its type and location (e.g. "AWS
-access key in config.go:14") and, if useful, a short masked form (first
-few characters plus `...`) — not the complete live value. The point of
-finding a secret is to get it removed and rotated; echoing it verbatim
-into this report just gives it a second place to leak from (terminal
-scrollback, saved session logs, a later copy-paste), on top of whatever
-exposure already exists from it being committed.
+**Never quote a live credential, or real PII, in full.** When a finding is
+a secret, token, credential, or an instance of PII (email, SSN, card
+number, session ID, internal hostname), reference its type and location
+(e.g. "AWS access key in config.go:14") and, if useful, a short masked
+form (first few characters plus `...`) — not the complete live value. The
+point of finding one is to get it removed (and, for a credential, rotated);
+echoing it verbatim into this report just gives it a second place to leak
+from (terminal scrollback, saved session logs, a later copy-paste), on top
+of whatever exposure already exists from it being committed.
 
 Produce a short structured list:
 
