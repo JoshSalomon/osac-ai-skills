@@ -201,13 +201,13 @@ the preamble.
    fall into without ever naming a concrete issue — that also does not
    trigger this rule; discard normally.
    - **Positive example (triggers `INVALID`):** a preamble says "this DAO
-     query builds without a tenant-scoping clause, which is a CRITICAL
+     query builds without a tenant-scoping clause, which is a `CRITICAL`
      leak" and the response then ends in a solo `NONE` row — the finding
      was real, the table doesn't report it, and it got silently discarded;
      don't let that happen.
    - **Negative example — finding correctly tabled (does not trigger,
      discard normally):** a preamble says "this DAO query builds without a
-     tenant-scoping clause, which is CRITICAL" and the table that follows
+     tenant-scoping clause, which is `CRITICAL`" and the table that follows
      has exactly one row: `| CRITICAL | foo.go:42 | missing tenant-scoping
      clause | add tenant filter |`. The prefix named a real finding, but
      the table reports that same finding — nothing was discarded or hidden,
@@ -215,7 +215,7 @@ the preamble.
      leak.
    - **Negative example — no concrete finding named (does not trigger,
      discard normally):** a preamble says "I couldn't decide if this is
-     IMPORTANT or CRITICAL, but both are blocking so it doesn't matter"
+     `IMPORTANT` or `CRITICAL`, but both are blocking so it doesn't matter"
      with no file, line, or behavior named — this is the reviewer reasoning
      about the severity vocabulary in the abstract, not reporting a
      finding, regardless of what the table says afterward.

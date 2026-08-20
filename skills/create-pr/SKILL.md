@@ -69,26 +69,16 @@ actually touches instead of assuming a single component:
 # validation-commands.md's per-component "### <name>" sections, if a future
 # component merges into osac or one of these splits out.
 #
-# KNOWN GAP: consumer repos' AGENTS.md already lists osac-metering as a
-# mono-repo subdirectory, but it isn't in any of the three lists above yet,
-# and no build/lint/test tooling is defined for it anywhere yet to add here
-# correctly. A PR touching only osac/osac-metering/** currently gets zero
-# component-specific validation from create-pr Step 2. Wire it in once
-# osac-metering has real bootstrap/build tooling to point at — don't add it
-# with guessed commands before then.
+# KNOWN GAP: osac-metering is a real mono-repo subdirectory per consumer
+# repos' AGENTS.md, but absent from all four lists above and has no
+# build/test tooling defined anywhere yet — wire it in once it does,
+# don't add it with guessed commands before then.
 if [[ "$REPO_NAME" == "osac" ]]; then
   # Diff from the merge-base, not a raw two-ref diff against main's current
-  # tip — the same reasoning review-gate's Step 1 documents in full: if
-  # main has gained unrelated commits since this branch diverged, a raw
-  # `git diff main..HEAD` pulls those in too, misclassifying which
-  # components this branch actually touched.
-  #
-  # Split the merge-base, diff, and filter into separate steps: a `git
-  # merge-base`/`git diff` failure must still propagate under
-  # `set -e`/`pipefail`, but "no merged-component subdirectory touched" is
-  # a valid, empty-string-producing outcome — awk exits 0 on zero matching
-  # lines, so no trailing `|| true` is needed (which would otherwise mask a
-  # genuine `git diff` failure too).
+  # tip — see review-gate's Step 1 for why (main advancing after divergence
+  # would otherwise misclassify touched components). No trailing `|| true`
+  # on the awk pipeline: "nothing matched" is a valid empty result, but a
+  # genuine `git diff`/`git merge-base` failure must still propagate.
   MERGE_BASE_FOR_COMPONENTS=$(git merge-base main HEAD)
   CHANGED_PATHS=$(git diff "$MERGE_BASE_FOR_COMPONENTS" --name-only)
   TOUCHED_COMPONENTS=$(printf '%s\n' "$CHANGED_PATHS" \
@@ -231,29 +221,19 @@ The number of calls this produces always matches the config's enabled
 entries — adding, removing, or disabling a reviewer changes it without any
 edit to this file. `security-review` cannot be disabled via `enabled: false` while its entry
 keeps `mandatory: true` (check 9) — but deleting the entry outright is not
-itself blocked; that's an accepted limitation, not a bug. This same
-mandatory-reviewer protection is also enforced by an independent CI check
-(`.github/workflows/mandatory-reviewer-check.yml`, running
-`tools/check-mandatory-reviewers.py`) that fails any PR removing the entry,
-its `mandatory: true` line, or its `enabled` status — the checklist's check
-9 alone only guards a single-field disable while the entry stays in place.
+itself blocked; that's an accepted limitation, not a bug. An independent
+CI check (`.github/workflows/mandatory-reviewer-check.yml`) catches entry
+removal too — see [reviewer-config.md](references/reviewer-config.md)'s
+Mandatory Reviewers section.
 
 Wait for all agents to complete. **A reviewer that hasn't returned within
 10 minutes — or if this harness provides no way to detect/bound a hung
 subagent's runtime at all — is `INVALID`** (see Step 4.2); there is no
-option to note the limitation and keep waiting. Where the harness offers
-an actual wall-clock timeout parameter on the agent-spawning tool itself,
-set it to 10 minutes so a hung call is force-terminated rather than
-waited on indefinitely. Where it doesn't, be honest about what a
-`duration_ms`-style field (present on completion notifications in some
-harnesses) can and can't do here: it only ever arrives *after* a call
-finishes, so it can flag a reviewer that eventually returned but took too
-long, but it gives no signal at all for a reviewer that never returns —
-there is no live/polling mechanism to check an in-flight call's elapsed
-time from inside a single blocking spawn. For that genuinely-hung case,
-the "no way to detect/bound a hung subagent's runtime at all" branch above
-is the honest description of the situation, not a fallback this
-`duration_ms` check quietly resolves.
+option to note the limitation and keep waiting. Prefer a real wall-clock
+timeout parameter on the agent-spawning tool itself, if the harness offers
+one, over a post-hoc `duration_ms`-style field — the latter only arrives
+after a call finishes, so it can't detect a reviewer that never returns at
+all.
 
 ### 4.2: Validate Outputs and Aggregate Results
 
@@ -295,7 +275,7 @@ shrinks with the config, not with this example.
 |-----------|----------------|--------|
 | Step 4.1 config validation failed | INVALID | Stop, report which check/entry failed |
 | Any spawned reviewer's result is INVALID (Step 4.2) | INVALID | Stop, name the reviewer(s), show every reviewer's output |
-| Any finding is CRITICAL or IMPORTANT | BLOCKED | Stop, show aggregated report |
+| Any finding is `CRITICAL` or `IMPORTANT` | BLOCKED | Stop, show aggregated report |
 | All findings are ADVISORY only, or there are no findings at all | PASS | Continue to Step 5 |
 
 ### 4.4: Gate and Report
@@ -315,12 +295,12 @@ An empty review scope is **not** INVALID — a reviewer with nothing to
 review reports a lone `NONE` row, contributing to PASS.
 
 **If BLOCKED:** Stop. Show the full aggregated findings table with all
-CRITICAL/IMPORTANT issues. Do not push. Fix the flagged issues in a new
+`CRITICAL`/`IMPORTANT` issues. Do not push. Fix the flagged issues in a new
 commit (never amend — see Red Flags), then restart at Step 2.
 Re-run validation, coverage analysis, and this review gate before pushing.
 
 **If PASS (with ADVISORY findings):** Show the aggregated report with the
-ADVISORY findings and note that they do not block. Continue to Step 5.
+ADVISORY findings — these do not block. Continue to Step 5.
 
 **If PASS (clean):** Report "Pre-flight review gate: PASS (no findings)."
 Continue to Step 5.
