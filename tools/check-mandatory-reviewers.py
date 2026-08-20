@@ -36,8 +36,12 @@ def main():
             config = yaml.safe_load(f)
     except FileNotFoundError:
         fail(f"{path} not found")
-    except yaml.YAMLError as e:
-        fail(f"{path} is not valid YAML: {e}")
+    except yaml.YAMLError:
+        # Not `fail(f"...: {e}")` -- PyYAML's exception text often quotes a
+        # snippet of the offending content for context, so a malformed
+        # config containing a secret-shaped value would echo it straight
+        # into CI logs. Point at the file instead of the parse error detail.
+        fail(f"{path} is not valid YAML — check its syntax with a local YAML linter")
 
     if not isinstance(config, dict):
         fail(f"{path} does not parse to a mapping")
