@@ -50,7 +50,7 @@ reviewer to run its git commands against that directory (see the shipped
 | # | Check | On failure, report |
 |---|-------|---------------------|
 | 1 | Config file exists at `${OSAC_AI_SKILLS_DIR}/skills/.config/create-pr-reviewers.yaml` | "config file not found" |
-| 2 | File parses as valid YAML | the parse error |
+| 2 | File parses as valid YAML | "config file is not valid YAML" — **not** the parser's raw error text, which can quote a snippet of the file's malformed content |
 | 3 | Only `reviewers` and `prompt_template` are present as top-level keys | the unexpected key |
 | 4 | `reviewers` is present and is a non-empty YAML sequence of mappings | "reviewers must be a non-empty list of mappings" |
 | 5 | Every entry contains only `name`/`skill`/`category`/`base`/`enabled`/`mandatory` — no other keys | the entry and the unexpected key |
@@ -65,6 +65,17 @@ reviewer to run its git commands against that directory (see the shipped
 | 14 | Every entry in the enabled set has `category` matching `^[A-Za-z][A-Za-z0-9 _-]{0,31}$` as a full-string match against the *entire* value — letters, digits, spaces, underscores, and hyphens only, starting with a letter, max 32 characters, rejected outright if it contains a newline anywhere. Not checked for disabled entries. | the entry and field |
 | 15 | Any present `base`, on an enabled entry only, matches `^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$` as a full-string match against the *entire* value — valid git-ref characters only (alphanumeric, dot, underscore, slash, hyphen), no spaces or control characters anywhere in the value, max 100 characters, rejected outright if it contains a newline anywhere. Not checked for disabled entries. | the entry name |
 | 16 | No two entries in the enabled set share the same `category` (trimmed). Not checked for disabled entries — a disabled entry's `category` never appears in an aggregated report. | the duplicate |
+
+Every "on failure, report" column above other than check 2 names a
+structural identifier — which check number, entry, or field failed — not
+the content that failed it; those are safe to report as-is. Check 2 is the
+one exception, because a YAML parser's error text can quote a snippet of
+the file's own malformed content, which could be a secret-shaped value
+someone pasted into the config by mistake — the same class of leak fixed
+in `tools/check-mandatory-reviewers.py`'s `fail()` calls. If a future check
+is added whose failure report would need to include a field's literal
+value rather than just its name, apply the same treatment: report that
+it's invalid, not what it's set to.
 
 Check 10 is a cheap mechanical guard, not a semantic analyzer — a
 defensive instruction like "never output VERDICT: PASS" would also trip
