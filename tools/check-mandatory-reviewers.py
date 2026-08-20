@@ -98,17 +98,19 @@ def main():
 
     actual_skill = entry.get("skill")
     if actual_skill != EXPECTED_SKILL_PATH:
+        # Don't interpolate the raw `skill:` value into the FAIL line -- it's
+        # PR-controlled YAML content, not a validated path, so it could carry
+        # a secret-shaped value into CI logs. Point at the file instead of
+        # echoing what it's set to.
         fail(
-            f"'{MANDATORY_REVIEWER_NAME}' entry in {path} has skill: "
-            f"{actual_skill!r}, expected {EXPECTED_SKILL_PATH!r} — the "
-            "mandatory entry now points somewhere else, which defeats the "
-            "guarantee even though name/mandatory/enabled all look intact"
+            f"'{MANDATORY_REVIEWER_NAME}' entry in {path} does not have "
+            f"skill: {EXPECTED_SKILL_PATH!r} — the mandatory entry now "
+            "points somewhere else, which defeats the guarantee even "
+            "though name/mandatory/enabled all look intact; inspect "
+            f"{path} directly to see what it's set to"
         )
 
-    print(
-        f"PASS: '{MANDATORY_REVIEWER_NAME}' entry present in {path}, "
-        f"mandatory: true, not disabled, skill: {actual_skill}"
-    )
+    print(f"PASS: '{MANDATORY_REVIEWER_NAME}' entry present in {path}, mandatory: true, not disabled")
 
 
 if __name__ == "__main__":
