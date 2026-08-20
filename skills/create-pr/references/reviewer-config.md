@@ -275,6 +275,18 @@ still discards cleanly no matter how long it is.
 PASS/BLOCKED from severity labels; a reviewer's `NONE` row is its
 contribution toward an eventual PASS.
 
+**Redact credential-looking content before displaying any finding,
+regardless of verdict.** This applies everywhere a reviewer's text reaches
+the report: a parsed `Issue`/`Suggestion` cell in the aggregated
+BLOCKED/PASS table (Step 4.2), not only raw unparsed output on the
+`INVALID` path below. `security-review` scans the full diff for secrets
+and credentials, so a legitimate, well-formed finding row can itself
+contain one it found — a clean parse is not a guarantee the cell content
+is safe to echo. If any cell or raw text looks like it contains a live
+credential, redact it (mask everything after a short recognizable prefix)
+before displaying it, the same way `security-review`'s own Output section
+asks it not to quote one in full in the first place.
+
 **Anything not matching this shape is unparseable** — including a timeout,
 an unbounded-wait harness, a bare `"no findings"` string, a `NONE` or
 `INVALID` row combined with any other row, a malformed table (even a
@@ -287,13 +299,9 @@ unparseable or missing result makes the **overall** verdict `INVALID`.
 spawned reviewer's output in the report** (raw if unparsed, its findings if
 parsed) — not only the one that caused the `INVALID`. This is for
 diagnosing *why* parsing failed, not a license to echo whatever the
-reviewer wrote unfiltered: `security-review` scans the full diff for
-secrets and credentials, so its raw, unparsed output can itself contain
-one it found. If a reviewer's raw text looks like it contains a live
-credential, redact it (mask everything after a short recognizable prefix)
-before displaying it, the same way `security-review`'s own Output section
-asks it not to quote one in full in the first place — a malformed response
-is not an exception to that.
+reviewer wrote unfiltered — apply the redaction rule above to this raw
+output the same as to any parsed cell; a malformed response is not an
+exception to it.
 
 **Known limitation:** the header-row anchor and the concrete-finding judgment
 call in discarded prose are both checked by an LLM reading these

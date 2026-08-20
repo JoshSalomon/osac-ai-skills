@@ -258,7 +258,8 @@ reviewers into a PASS alongside a failed one.
 Only once every spawned reviewer's result validates — meaning no reviewer
 reported an `INVALID` row — combine all real-finding rows
 (`CRITICAL`/`IMPORTANT`/`ADVISORY`, excluding any `NONE` rows — they aren't
-findings) into a single aggregated table:
+findings) into a single aggregated table, redacting per
+[reviewer-config.md](references/reviewer-config.md)'s redaction rule:
 
 ```markdown
 | Severity | File:Line | Category | Issue | Suggestion |
@@ -414,7 +415,7 @@ related PRs in the description (e.g., 'Depends on osac-project/osac#123')."
 
 ### No push remote detected
 
-Run `"${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" --print` to see detected remotes (Step 1 already exits before this point if no vendored checkout was found, so `$OSAC_AI_SKILLS_DIR` is always set here). If no push remote was found, add one:
+Run `"${OSAC_AI_SKILLS_DIR}/tools/resolve-remotes.sh" --print` to see detected remotes (`$OSAC_AI_SKILLS_DIR` is always set by this point). If no push remote was found, add one:
 
 ```bash
 git remote add <name> git@github.com:<your-username>/<repo>.git
