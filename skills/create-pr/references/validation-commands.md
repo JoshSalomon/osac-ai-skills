@@ -14,7 +14,7 @@ in the consumer `osac` mono-repo checkout). The `osac-operator`/
 `bare-metal-fulfillment-operator`'s does not — confirmed by reading both
 Makefiles directly, not inferred from one and assumed for the other.
 
-### fulfillment-service
+## fulfillment-service
 
 ```bash
 cd "$REPO_DIR/fulfillment-service"
@@ -25,7 +25,7 @@ ginkgo run -r internal
 uv run dev.py lint
 ```
 
-### osac-operator
+## osac-operator
 
 ```bash
 cd "$REPO_DIR/osac-operator"
@@ -38,7 +38,7 @@ make check-helm-crds
 make test-kustomize
 ```
 
-### osac-aap
+## osac-aap
 
 ```bash
 cd "$REPO_DIR/osac-aap"
@@ -46,7 +46,7 @@ make test
 uv run ansible-lint
 ```
 
-### osac-installer
+## osac-installer
 
 ```bash
 cd "$REPO_DIR/osac-installer"
@@ -76,7 +76,7 @@ component, including `osac-csi-driver` — `scripts/sync-image-tags.sh` was remo
 upstream (`OSAC-3367`); there is no sync step to run. Real release tags are set
 automatically by `osac`'s own CI at release time, not by a feature PR.
 
-### bare-metal-fulfillment-operator
+## bare-metal-fulfillment-operator
 
 ```bash
 cd "$REPO_DIR/bare-metal-fulfillment-operator"
@@ -88,7 +88,7 @@ make manifests generate && git diff --exit-code
 make check-helm-crds
 ```
 
-### osac-csi-driver
+## osac-csi-driver
 
 ```bash
 cd "$REPO_DIR/osac-csi-driver"
@@ -101,6 +101,6 @@ make test
 No CRDs, so no `make manifests`/`generate` step (unlike `osac-operator` and
 `bare-metal-fulfillment-operator`).
 
-### Other repos
+## Other repos
 
 Read the component's CLAUDE.md or Makefile for the correct validation sequence.

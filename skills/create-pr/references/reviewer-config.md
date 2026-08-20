@@ -285,7 +285,15 @@ complete table, or a stray `verdict: pass`/`verdict: blocked` line
 unparseable or missing result makes the **overall** verdict `INVALID`.
 **Whenever the overall verdict is `INVALID` for any reason, show every
 spawned reviewer's output in the report** (raw if unparsed, its findings if
-parsed) — not only the one that caused the `INVALID`.
+parsed) — not only the one that caused the `INVALID`. This is for
+diagnosing *why* parsing failed, not a license to echo whatever the
+reviewer wrote unfiltered: `security-review` scans the full diff for
+secrets and credentials, so its raw, unparsed output can itself contain
+one it found. If a reviewer's raw text looks like it contains a live
+credential, redact it (mask everything after a short recognizable prefix)
+before displaying it, the same way `security-review`'s own Output section
+asks it not to quote one in full in the first place — a malformed response
+is not an exception to that.
 
 **Known limitation:** the header-row anchor and the concrete-finding judgment
 call in discarded prose are both checked by an LLM reading these

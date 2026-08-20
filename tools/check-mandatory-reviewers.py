@@ -19,11 +19,13 @@ EXPECTED_SKILL_PATH = "skills/security-review/SKILL.md"
 
 
 def fail(message):
+    """Print a FAIL line and exit non-zero."""
     print(f"FAIL: {message}")
     sys.exit(1)
 
 
 def main():
+    """Validate the mandatory security-review entry in the given YAML config."""
     if len(sys.argv) != 2:
         fail(f"usage: {sys.argv[0]} <path-to-yaml>")
 
@@ -44,12 +46,16 @@ def main():
     if not isinstance(reviewers, list):
         fail(f"{path} has no top-level 'reviewers' list")
 
-    # Exact name match against the parsed structure -- not a substring or
-    # line-anchor search -- so a decoy entry like "security-review-legacy"
-    # or "security-review-experimental" is never confused with the real one.
+    # Exact, literal name match against the parsed structure -- not a
+    # substring, line-anchor, or whitespace-tolerant search -- so a decoy
+    # entry like "security-review-legacy"/"security-review-experimental",
+    # or a padded name like "security-review " with a trailing space, is
+    # never confused with the real one. A padded-name entry is treated
+    # exactly like a missing entry (see the smoke test), not silently
+    # accepted as "close enough."
     matches = [
         r for r in reviewers
-        if isinstance(r, dict) and str(r.get("name", "")).strip() == MANDATORY_REVIEWER_NAME
+        if isinstance(r, dict) and r.get("name") == MANDATORY_REVIEWER_NAME
     ]
 
     if not matches:

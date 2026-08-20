@@ -66,40 +66,46 @@ actually touches instead of assuming a single component:
 # bare-metal-fulfillment-operator|osac-csi-driver) list in sync with
 # bootstrap.sh's MERGED_COMPONENTS array (in consumer repos), references/
 # file-classification.md's File Classification table, and references/
-# validation-commands.md's per-component "### <name>" sections, if a future
+# validation-commands.md's per-component "## <name>" sections, if a future
 # component merges into osac or one of these splits out.
 #
-# KNOWN GAP: osac-metering is a real mono-repo subdirectory per consumer
-# repos' AGENTS.md, but absent from all four lists above and has no
-# build/test tooling defined anywhere yet — wire it in once it does,
-# don't add it with guessed commands before then.
+# KNOWN GAP: osac-metering is a real mono-repo subdirectory (consumer
+# AGENTS.md) absent from all four lists above, with no build/test tooling
+# defined yet -- flagged below (UNSUPPORTED_COMPONENTS_TOUCHED) instead of
+# guessed commands, so it's never silently treated as "no component touched."
 if [[ "$REPO_NAME" == "osac" ]]; then
   # Diff from the merge-base, not a raw two-ref diff against main's current
   # tip — see review-gate's Step 1 for why (main advancing after divergence
   # would otherwise misclassify touched components). No trailing `|| true`
-  # on the awk pipeline: "nothing matched" is a valid empty result, but a
+  # on the awk pipelines: "nothing matched" is a valid empty result, but a
   # genuine `git diff`/`git merge-base` failure must still propagate.
   MERGE_BASE_FOR_COMPONENTS=$(git merge-base main HEAD)
   CHANGED_PATHS=$(git diff "$MERGE_BASE_FOR_COMPONENTS" --name-only)
   TOUCHED_COMPONENTS=$(printf '%s\n' "$CHANGED_PATHS" \
     | awk -F/ '$1 ~ /^(fulfillment-service|osac-operator|osac-aap|osac-installer|bare-metal-fulfillment-operator|osac-csi-driver)$/ { print $1 }' \
     | sort -u)
+  UNSUPPORTED_COMPONENTS_TOUCHED=$(printf '%s\n' "$CHANGED_PATHS" \
+    | awk -F/ '$1 == "osac-metering" { print $1 }' | sort -u)
 else
   TOUCHED_COMPONENTS="$REPO_NAME"
+  UNSUPPORTED_COMPONENTS_TOUCHED=""
 fi
 ```
 
 `$TOUCHED_COMPONENTS` may list zero, one, or multiple names. Use it in Steps 2
 and 3 to select which per-component block(s) apply — run every matching block,
-not just the first. If it's empty because the change is purely doc/config
-outside all six subdirectories (e.g. `osac/README.md`), skip the
-component-specific parts of Steps 2 and 3. If it's empty but the change
-touches root-level files that affect multiple components' builds (e.g.
-`osac/go.work`, a root `Makefile`, `.github/workflows/`), don't skip
-validation entirely — read `osac`'s own `AGENTS.md`/`CLAUDE.md` for the
-correct root-level check (a broken `go.work` can break both
-`fulfillment-service` and `osac-operator` builds without either
-component's own validation block catching it).
+not just the first. Three distinct cases, not two:
+
+- **Both empty** — a genuine no-component change (e.g. `osac/README.md`).
+  Skip the component-specific parts of Steps 2 and 3.
+- **`$UNSUPPORTED_COMPONENTS_TOUCHED` non-empty** (currently only
+  `osac-metering`) — **stop**, don't skip. Read that component's own
+  CLAUDE.md/Makefile, confirm the correct build/lint/test sequence
+  manually, and only then continue.
+- **`$TOUCHED_COMPONENTS` empty but root-level files affecting multiple
+  builds are touched** (`osac/go.work`, a root `Makefile`,
+  `.github/workflows/`) — don't skip validation, read `osac`'s own
+  `AGENTS.md`/`CLAUDE.md` for the correct root-level check.
 
 ## Step 2: Run Validation
 
@@ -181,14 +187,11 @@ output contract.
 ### 4.1: Validate Config and Launch Reviewers in Parallel
 
 Read `${OSAC_AI_SKILLS_DIR}/skills/.config/create-pr-reviewers.yaml` with
-`Read` — `$OSAC_AI_SKILLS_DIR` is already resolved in Step 1's remote
-resolution (see [resolve-remotes.md](references/resolve-remotes.md)), and
-every `skill:` value in the config is also read from
-`${OSAC_AI_SKILLS_DIR}/<path>`. There is no separate resolution step here:
-unlike a consumer workspace where `skills/` might or might not be the
-current repo, this repo *is* `skills/`'s canonical home, so `skill:` values
-resolve directly against `$OSAC_AI_SKILLS_DIR` with no self-check-then-
-fallback needed.
+`Read` — `$OSAC_AI_SKILLS_DIR` is already resolved in Step 1 (see
+[resolve-remotes.md](references/resolve-remotes.md)), and every `skill:`
+value is also read from `${OSAC_AI_SKILLS_DIR}/<path>`. No separate
+resolution step: this repo *is* `skills/`'s canonical home, unlike a
+consumer workspace where it might not be.
 
 Run every check in
 [reviewer-config.md](references/reviewer-config.md)'s Validation

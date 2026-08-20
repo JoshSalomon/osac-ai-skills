@@ -207,6 +207,22 @@ EOF
   expect_fail "a commented-out 'mandatory: true' line does not satisfy the requirement"
 }
 
+test_padded_name_does_not_match() {
+  write_config <<'EOF'
+reviewers:
+  - name: "security-review "
+    skill: skills/security-review/SKILL.md
+    category: Security
+    base: main
+    enabled: true
+    mandatory: true
+
+prompt_template: |
+  placeholder {skill} {base} {category} {repo_dir}
+EOF
+  expect_fail "a name with a trailing space is not treated as the real security-review entry (same as missing)"
+}
+
 test_real_config_passes
 test_valid_config_passes
 test_missing_entry_fails
@@ -217,5 +233,6 @@ test_repointed_skill_fails
 test_decoy_entry_does_not_hide_missing_mandatory
 test_unrelated_similarly_named_entry_disabled_does_not_false_fail
 test_commented_out_mandatory_fails
+test_padded_name_does_not_match
 
 echo "All check-mandatory-reviewers smoke tests passed."

@@ -6,9 +6,11 @@
 # all enabled reviewers launch in a single message so they run concurrently.
 #
 # `mandatory: true` (set below on security-review) means `enabled: false`
-# on that entry is a config error, not a way to skip it. Mistake-prevention
-# only — deleting this entry entirely, or removing the `mandatory: true`
-# line, is NOT blocked; see references/reviewer-config.md.
+# on that entry is a config error, not a way to skip it. That manifest
+# check alone only rejects `enabled: false` in place — the separate
+# mandatory-reviewer-check.yml CI check also rejects deleting this entry
+# outright, dropping the `mandatory: true` line, or repointing `skill:`;
+# see references/reviewer-config.md for what each layer actually covers.
 
 reviewers:
   - name: performance-review
