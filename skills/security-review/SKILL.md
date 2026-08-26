@@ -166,7 +166,9 @@ Before emitting the final report, for each such approach:
    alternation branches of the same regex; other values of the same
    allowlist/`frozenset`/constant set; other arms of the same
    `match`/`switch`/`if-elif` status chain; other call sites of the
-   same helper in the diff. Use Grep if needed; say what you checked.
+   same helper in the diff — including helpers or later passes that
+   do the same job, and values with no explicit arm. Use Grep if
+   needed; say what you checked.
 3. **Report every unguarded sibling as its own finding** — one native
    list line, or one create-pr table row, with **exactly one**
    `File:Line`. Never put multiple locations in that cell (that shape
