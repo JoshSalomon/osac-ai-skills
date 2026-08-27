@@ -171,9 +171,7 @@ Before emitting the final report, for each such approach:
    needed; say what you checked.
 3. **Report every unguarded sibling as its own finding** — one native
    list line, or one create-pr table row, with **exactly one**
-   `File:Line`. Never put multiple locations in that cell (that shape
-   is `INVALID` under create-pr's table contract). Extra sites belong
-   in Issue/Suggestion prose on a related row, or as their own rows.
+   `path:line` per row. Extra unguarded siblings are their own rows.
    Stopping at the first hit is wrong. **Assess severity
    independently** for each sibling from its call path, guards, and
    impact; do not copy the triggering instance's tag. A similar arm
