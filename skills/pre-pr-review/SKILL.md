@@ -3,7 +3,7 @@ name: pre-pr-review
 description: >
   Use when the user invokes /pre-pr-review, wants a pre-flight review without
   creating a PR, or wants create-pr Step 4's config-driven reviewers run in
-  isolation (no validation, coverage, push, or gh pr create). Orchestrates
+  isolation (no repo build/lint/test, coverage, push, or gh pr create). Orchestrates
   skills/.config/create-pr-reviewers.yaml as parallel subagents. Distinct from
   /review-gate (sequential, different output, includes dirty tree).
 metadata:
@@ -14,7 +14,7 @@ metadata:
 
 Config-driven pre-flight review gate: the same YAML, validation checklist,
 parallel reviewer fan-out, Output Contract, and PASS / BLOCKED / INVALID
-verdict as create-pr Step 4 — without validation, coverage, push, or
+verdict as create-pr Step 4 — without repo build/lint/test, coverage, push, or
 `gh pr create`.
 
 **Announce at start:** "Using the pre-pr-review skill to run the pre-PR review gate."
