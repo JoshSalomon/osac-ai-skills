@@ -68,30 +68,35 @@ REPO_DIR=$(git rev-parse --show-toplevel)
 
 If this fails, overall verdict `INVALID` — name the git error; stop.
 
-**If `$OSAC_AI_SKILLS_DIR` is already set, reuse it.** Otherwise locate it
-with the same two-candidate loop as `skills/create-pr/references/resolve-remotes.md`
-— **do not** run `resolve-remotes.sh` (no push remote required):
+**If `$OSAC_AI_SKILLS_DIR` is already set, reuse it.** Otherwise find a
+directory that contains `skills/.config/create-pr-reviewers.yaml`. **Do
+not** run `resolve-remotes.sh` (no push remote required). Search
+**local-first**, then one parent of `$REPO_DIR` (a nested component repo
+such as `osac/` lives under a workspace that holds `skills/` or
+`.osac-ai-skills/`), and only then `~/.osac-ai-skills`. At each level
+prefer `.osac-ai-skills/` over the directory itself. A global install
+must not shadow a checkout in or above `$REPO_DIR`.
 
 ```bash
 if [[ -z "${OSAC_AI_SKILLS_DIR:-}" ]]; then
   OSAC_AI_SKILLS_DIR=""
-  for _cand in "${HOME}/.osac-ai-skills" "${REPO_DIR}/.osac-ai-skills"; do
-    if [[ -x "${_cand}/tools/resolve-remotes.sh" ]]; then
-      OSAC_AI_SKILLS_DIR="${_cand}"; break
+  for _cand in \
+      "${REPO_DIR}/.osac-ai-skills" \
+      "${REPO_DIR}" \
+      "${REPO_DIR}/../.osac-ai-skills" \
+      "${REPO_DIR}/.." \
+      "${HOME}/.osac-ai-skills"; do
+    if [[ -f "${_cand}/skills/.config/create-pr-reviewers.yaml" ]]; then
+      OSAC_AI_SKILLS_DIR=$(cd "$_cand" && pwd) || continue
+      break
     fi
   done
-  # Running inside the skills clone itself (neither vendor path exists).
-  if [[ -z "$OSAC_AI_SKILLS_DIR" ]] \
-     && [[ -f "${REPO_DIR}/skills/.config/create-pr-reviewers.yaml" ]] \
-     && [[ -x "${REPO_DIR}/tools/resolve-remotes.sh" ]]; then
-    OSAC_AI_SKILLS_DIR="$REPO_DIR"
-  fi
 fi
 ```
 
-If still unset → `INVALID`. Tell the user to bootstrap (`tools/bootstrap.sh`
-in the consumer, or clone `osac-ai-skills`) so `~/.osac-ai-skills` or
-`$REPO_DIR/.osac-ai-skills` exists.
+If still unset → `INVALID`. Tell the user to bootstrap so the YAML exists
+at `$REPO_DIR`, `$REPO_DIR/..`, a vendored `.osac-ai-skills` in either, or
+`~/.osac-ai-skills`.
 
 If `git status --porcelain` in `$REPO_DIR` is non-empty, **warn** that
 uncommitted/untracked files are **out of scope** (reviewers use
